@@ -1,0 +1,90 @@
+{
+    "sync-delay-in-seconds": 60,
+    "start-time": "45 6 * * *",
+    "stop-time": "0 0 * * *",
+    "test-url": "https://my.cloud",
+    "debug": true,
+    "sync-items": {
+        "WhatsApp": {
+            "type": "rsync",
+            "local-path": "/data/data/com.termux/files/home/storage/shared/Android/media/com.whatsapp/WhatsApp",
+            "remote-path": "me@my.cloud:/data/cloud/android-backup/WhatsApp",
+            "ignore-patterns": [
+                "trash"
+            ],
+            "label": "🟢",
+            "watch": true,
+            "max-depth": -1,
+            "watch-new_dir": true,
+            "full-sync": true
+        },
+        "Signal": {
+            "type": "rsync",
+            "local-path": "/data/data/com.termux/files/home/storage/shared/Signal",
+            "remote-path": "me@my.cloud:/data/cloud/android-backup/Signal",
+            "ignore-patterns": [
+                "tmp"
+            ],
+            "label": "🔵",
+            "watch": true,
+            "max-depth": 0,
+            "watch-new_dir": false,
+            "full-sync": true
+        },
+        "SMS": {
+            "type": "rsync",
+            "local-path": "/data/data/com.termux/files/home/storage/shared/Sms",
+            "remote-path": "me@my.cloud:/data/cloud/android-backup/SMS",
+            "ignore-patterns": null,
+            "label": "🟣",
+            "watch": true,
+            "max-depth": 0,
+            "watch-new_dir": false,
+            "full-sync": true
+        },
+        "Calls": {
+            "type": "rclone",
+            "local-path": "/data/data/com.termux/files/home/storage/shared/Audio/Calls",
+            "remote-path": "me.cloud:Audio/Calls",
+            "ignore-patterns": null,
+            "label": "☎️",
+            "watch": true,
+            "max-depth": 0,
+            "watch-new_dir": false,
+            "full-sync": true
+        },
+        "Camera": {
+            "type": "rclone",
+            "local-path": "/data/data/com.termux/files/home/storage/shared/DCIM/Camera",
+            "remote-path": "me.cloud:Photos/Poco-F3",
+            "ignore-patterns": [
+                "pending"
+            ],
+            "label": "🖼",
+            "watch": true,
+            "max-depth": 0,
+            "watch-new_dir": false,
+            "full-sync": true
+        },
+        "GX-80": {
+            "type": "rclone",
+            "local-path": "/data/data/com.termux/files/home/storage/shared/DCIM/GX-80",
+            "remote-path": "me.cloud:Photos/GX-80",
+            "ignore-patterns": null,
+            "label": "📷",
+            "watch": true,
+            "max-depth": 1,
+            "watch-new_dir": true,
+            "full-sync": true
+        },
+        "Voicemail": {
+            "type": "rclone",
+            "local-path": "/data_mirror/data_ce/null/0/com.android.providers.contacts/app_voicemail-data",
+            "remote-path": "me.cloud:Audio/Voicemails",
+            "root": true,
+            "label": "🔊",
+            "watch": false,
+            "full-sync": true
+        }
+    }
+}
