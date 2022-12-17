@@ -28,7 +28,7 @@ class CommandWatcher:
         for file_name in os.listdir(Path(self.commands_dir)):
             os.remove(Path(self.commands_dir) / file_name)
 
-        self.wd = self.i_notify_thread.add_inotify_watch(self.commands_dir, _flags=flags.CREATE)
+        self.wd = self.i_notify_thread.add_i_notify_watch(self.commands_dir, _flags=flags.CREATE)
         self.i_notify_thread.register_watcher(self)
 
     def __contains__(self, wd):
@@ -57,5 +57,4 @@ class CommandWatcher:
             yield CommandWatcher.last_command
             command_file = Path(self.commands_dir) / self.last_command
             if os.path.exists(command_file):
-                os.remove(command_file)
                 os.remove(command_file)

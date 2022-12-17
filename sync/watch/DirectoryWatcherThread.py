@@ -22,7 +22,7 @@ class DirectoryWatcherThread(Thread):
 
         self.sync_info = sync_info
 
-        self.files_info = FilesInformation(self.sync_info.id, self.sync_info.label)
+        self.files_info = FilesInformation(self.sync_info.id)
         if self.sync_info.type == "rclone":
             self.sync_tool = RClone(self.sync_info.local_path, self.sync_info.remote_path)
         elif self.sync_info.type == "rsync":
@@ -31,10 +31,12 @@ class DirectoryWatcherThread(Thread):
         self.connection_status = connection_status
         self.stop_required = False
         self.last_start_date = None
+        self.last_sync_date = None
         self.something_happened = Event()
         self.i_notify_thread = i_notify_thread
         self.wd_map: Dict[int, Path] = {}
-        self.__init_inotify_watches(self.sync_info.local_path)
+        self.__init_i_notify_watches(Path(self.sync_info.local_path))
+        logger.print(f"Number of i_notify watches created for {self.sync_info.id}: {len(self.wd_map.keys())}")
         self.i_notify_thread.register_watcher(self)
 
     def __contains__(self, wd):
@@ -43,25 +45,26 @@ class DirectoryWatcherThread(Thread):
     def is_path(self, path):
         return Path(path) == self.sync_info.local_path
 
-    def __init_inotify_watches(self, path):
-        wd = self.i_notify_thread.add_inotify_watch(path)
+    def __init_i_notify_watches(self, path):
+        # put also flags.MOVED_TO ?
+        wd = self.i_notify_thread.add_i_notify_watch(path, _flags=(flags.MODIFY | flags.CREATE))
         self.wd_map[wd] = path
 
         if self.sync_info.max_depth == -1 or (self.__depth(wd) + 1 <= self.sync_info.max_depth):
             for f in os.scandir(path):
                 if f.is_dir():
                     if not self.__ignore(f.name):
-                        self.__init_inotify_watches(path / f.name)
+                        self.__init_i_notify_watches(path / f.name)
 
-    def __remove_inotify_watcher(self):
+    def __remove_i_notify_watcher(self):
         for wd in self.wd_map.keys():
-            self.i_notify_thread.remove_inotify_watch(wd)
+            self.i_notify_thread.remove_i_notify_watch(wd)
 
     def __new_sub_dir_detected(self, event):
         if self.sync_info.watch_new_dir and (
                 self.sync_info.max_depth == -1 or (self.__depth(event.wd) + 1 <= self.sync_info.max_depth)):
             new_path = self.wd_map[event.wd] / event.name
-            wd = self.i_notify_thread.add_inotify_watch(new_path)
+            wd = self.i_notify_thread.add_i_notify_watch(new_path)
             self.wd_map[wd] = new_path
 
     def __depth(self, wd):
@@ -89,7 +92,7 @@ class DirectoryWatcherThread(Thread):
     # Stop the thread
     def stop(self):
         self.i_notify_thread.unregister_watcher(self)
-        self.__remove_inotify_watcher()
+        self.__remove_i_notify_watcher()
         self.stop_required = True
         self.something_happened.set()
         self.files_info.close()
@@ -144,6 +147,7 @@ class DirectoryWatcherThread(Thread):
             self.last_start_date = last_start_date
         else:
             sync_success = True
+            self.last_sync_date = datetime.datetime.now()
             if self.last_start_date is None:
                 self.files_info.sync_success_and_no_waiting_sync()
         return sync_success

@@ -50,7 +50,7 @@ class Logger:
     def load(self, workspace_path, stdout, debug):
         self.log_file = (Path(workspace_path) / "termux-sync.log").absolute()
 
-        if not os.path.exists(self.log_file):
+        if not os.path.exists(workspace_path):
             stdout = True
 
         level = "DEBUG" if debug else "INFO"

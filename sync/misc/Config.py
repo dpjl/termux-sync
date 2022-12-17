@@ -55,7 +55,7 @@ class SyncInfo:
         self.root = self.get(ConfSyncKey.root, default=False)
 
         self.activated = True
-        if not os.path.exists(self.local_path):
+        if not self.root and not os.path.exists(self.local_path):
             logger.print(f"Warning: {self.local_path} does not exist. This synchronization item will be ignored.")
             self.activated = False
 
@@ -73,9 +73,11 @@ class Config:
         self.commands_dir = None
         self.logs_file = None
         self.workspace_path = None
+        self.debug = False
 
-    def load(self, workspace_path):
+    def load(self, workspace_path, debug=False):
         self.workspace_path = workspace_path
+        self.debug = debug
         config_path = Path(workspace_path) / "termux-sync.json"
         if os.path.exists(config_path):
             logger.print(f"Configuration file: {config_path}")

@@ -7,9 +7,8 @@ from sync.misc.Notification import Notification
 
 class FilesInformation:
 
-    def __init__(self, sync_name, label):
+    def __init__(self, sync_name):
         self.sync_name = sync_name
-        self.label = label
         self.nb_files_sent = 0
         self.nb_files_updated = 0
         self.nb_unex_files_sent = 0
@@ -23,7 +22,7 @@ class FilesInformation:
 
     def get_status(self):
         files_status = f"{len(self.new_files)} > {self.nb_files_sent} [{self.nb_files_updated}]"
-        return f"[{self.label}] {STATUS_LABELS[self.status]} {files_status}"
+        return f"{STATUS_LABELS[self.status]} {files_status}"
 
     def synchronized_file(self, file_name):
         if file_name not in self.new_files:

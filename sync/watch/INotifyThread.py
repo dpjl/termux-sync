@@ -3,7 +3,7 @@ from threading import Thread, Lock
 from typing import List, Union
 
 import select
-from inotify_simple import INotify, flags
+from inotify_simple import INotify, masks
 
 from sync.misc.Logger import logger
 
@@ -17,17 +17,16 @@ class INotifyThread(Thread):
         self.lock = Lock()
         Thread.__init__(self)
 
-    def add_inotify_watch(self, path, _flags=(flags.MODIFY | flags.MOVED_FROM | flags.MOVED_TO |
-                                              flags.CREATE | flags.DELETE)):
+    def add_i_notify_watch(self, path, _flags=masks.ALL_EVENTS):
         with self.lock:
             wd = self.i_notify.add_watch(path, _flags)
-            logger.print(f"INotify watch added: {wd} ({path})")
+            logger.debug(f"INotify watch added: {wd} ({path})")
             return wd
 
-    def remove_inotify_watch(self, wd):
+    def remove_i_notify_watch(self, wd):
         with self.lock:
             self.i_notify.rm_watch(wd)
-            logger.print(f"INotify watch removed: {wd}")
+            logger.debug(f"INotify watch removed: {wd}")
 
     def register_watcher(self, watcher):
         self.watch_list.append(watcher)

@@ -2,9 +2,9 @@ import argparse
 import os
 import signal
 import time
+from pathlib import Path
 from threading import Lock, active_count
 
-from sync.misc.ActionSchedulerThread import ActionSchedulerThread
 from sync.misc.Config import ConfKey, config
 from sync.misc.Logger import logger
 from sync.misc.Notification import Notification
@@ -20,41 +20,52 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 class Main:
     def __init__(self, __workspace_path):
         self.workspace_path = __workspace_path
-        ActionSchedulerThread(self.start, config.get(ConfKey.start_time)).start()
-        ActionSchedulerThread(self.stop, config.get(ConfKey.stop_time)).start()
         self.i_notify_thread = INotifyThread()
         self.command_watcher = CommandWatcher(self.i_notify_thread)
         self.watch_list = None
         self.started = False
         self.lock = Lock()
 
-    def run(self):
-        self.i_notify_thread.start()
-        try:
-            self.start()
-            self.stop()
-            for command in self.command_watcher.watch():
-                if command == "start":
-                    self.start()
-                elif command == "stop":
-                    self.stop()
-        finally:
-            self.i_notify_thread.stop()
+    def run(self, full_sync, monitor, command):
+        if command is not None:
+            self.send_command(command)
+            exit(0)
+        if full_sync:
+            self.full_sync()
+        if monitor:
+            Notification.get().update()
+            self.i_notify_thread.start()
+            try:
+                self.start()
+                for command in self.command_watcher.watch():
+                    logger.print(f"'{command}' command received.")
+                    if command == "start":
+                        self.start()
+                    elif command == "stop":
+                        self.stop()
+                    elif command == "sync":
+                        self.full_sync()
+                    elif command == "exit":
+                        Notification.get().exiting()
+                        logger.print("Exit application now.")
+                        exit(0)
+            finally:
+                self.i_notify_thread.stop()
 
     @staticmethod
-    def set_airplane_state(state):
-        cmd1 = f"settings put global airplane_mode_on {state}"
-        cmd2 = "am broadcast -a android.intent.action.AIRPLANE_MODE --ez state true"
-        os.system(f'su -c "{cmd1} && {cmd2}"')
-
-    def pre_start(self):
-        pass
+    def send_command(command):
+        if os.path.exists(config.commands_dir):
+            logger.print(f"Send command {command}")
+            command_file = Path(config.commands_dir) / command
+            if os.path.exists(command_file):
+                os.remove(command_file)
+            command_file.touch()
 
     def start(self):
         with self.lock:
             if not self.started:
                 logger.print("Starting termux-sync watchers")
-                self.full_sync()
+                Notification.get().set_active()
                 self.watch_list = DirectoryWatcherList(self.i_notify_thread)
                 self.watch_list.start()
                 self.started = True
@@ -67,6 +78,7 @@ class Main:
                 self.watch_list.stop()
                 self.watch_list = None
                 self.started = False
+                Notification.get().set_inactive()
                 time.sleep(5)
                 logger.print(f"Number of active thread(s): {active_count()}")
 
@@ -95,21 +107,35 @@ class Main:
                             logger.print(f"Synchronized file: {file_path}")
                     logger.print(f"Full sync: {nb_files_sync} files synchronized")
                     full_sync_status[sync_info.id] = nb_files_sync
-        Notification.get().set_full_sync_status(full_sync_status)
+                    Notification.get().set_full_sync_status(full_sync_status)
+        Notification.get().full_sync_done()
         logger.print("<<< Full sync end")
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
+    pars = argparse.ArgumentParser(
         prog='termux-sync',
         description='Command line tools for files synchronization between mobile and cloud. '
                     'Synchronization itself is done using rclone or rsync. '
                     'Optional file watching is done using inotify. ')
 
-    parser.add_argument('-w', '--workspace', default="./.termux-sync", help='Specify a workspace folder')
-    parser.add_argument('-s', '--stdout', action='store_true', help='Display logs on stdout')
-    parser.add_argument('-d', '--debug', action='store_true', help='Display debug logs')
-    return parser.parse_args()
+    pars.add_argument('-w', '--workspace', default="./.termux-sync", help='Specify a workspace folder')
+    pars.add_argument('-c', '--command', default=None, help='Send a specific command to a termux-sync already started')
+    pars.add_argument('-f', '--full-sync', action='store_true', default=False, help='Full synchronization')
+    pars.add_argument('-m', '--monitor', action='store_true', default=True, help='Monitor changes and synchronize them')
+    pars.add_argument('-s', '--stdout', action='store_true', default=False, help='Display logs on stdout')
+    pars.add_argument('-v', '--verbose', action='store_true', default=False, help='Display also debug logs')
+    return pars.parse_args()
+
+
+def main():
+    args = parse_args()
+    if not os.path.exists(args.workspace):
+        print(f"Workspace '{args.workspace}' does not exist.")
+        exit(0)
+    logger.load(args.workspace, args.stdout, args.verbose)
+    config.load(args.workspace, args.verbose)
+    Main(args.workspace).run(args.full_sync, args.monitor, args.command)
 
 
 # TODO Les compteurs sont historisés et remis à 0.
@@ -118,6 +144,4 @@ if __name__ == "__main__":
     if not os.path.exists(args.workspace):
         print(f"Workspace '{args.workspace}' does not exist.")
         exit(0)
-    logger.load(args.workspace, args.stdout, args.debug)
-    config.load(args.workspace)
-    Main(args.workspace).run()
+    main()
