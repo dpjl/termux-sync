@@ -1,6 +1,7 @@
 from pathlib import Path
+from threading import Lock
 
-from sync.misc.Config import STATUS_LABELS, config
+from sync.misc.Config import STATUS_LABELS
 from sync.misc.Logger import logger
 from sync.misc.Notification import Notification
 
@@ -12,20 +13,21 @@ class FilesInformation:
         self.nb_files_sent = 0
         self.nb_files_updated = 0
         self.nb_unex_files_sent = 0
-        self.new_files = []
+        self.detected_files = []
+        self.detected_files_history = []
         self.sent_files = []
-        self.new_files_file = open(Path(config.workspace_path) / f"{self.sync_name}.txt", "a")
         self.status = "Started"
+        self.lock = Lock()
 
     def close(self):
-        self.new_files_file.close()
+        pass
 
     def get_status(self):
-        files_status = f"{len(self.new_files)} > {self.nb_files_sent} [{self.nb_files_updated}]"
+        files_status = f"{len(self.detected_files_history)} > {self.nb_files_sent} [{self.nb_files_updated}]"
         return f"{STATUS_LABELS[self.status]} {files_status}"
 
     def synchronized_file(self, file_name):
-        if file_name not in self.new_files:
+        if file_name not in self.detected_files_history:
             logger.print(f"Unexpected file {file_name}")
             self.nb_files_sent += 1
         else:
@@ -37,18 +39,32 @@ class FilesInformation:
         logger.print(f"{self.nb_files_sent} sent / {self.nb_files_updated} upd / {self.nb_unex_files_sent} unex")
         Notification.get().update()
 
-    def detected_file(self, file_path):
-        file_name = Path(file_path).name
-        if file_name not in self.new_files:
-            logger.print_inotify(f"{file_name} modified in {self.sync_name}")
+    def detected_file(self, file_path: Path):
+        file_name = file_path.name
+        file_path_str = str(file_path)
+        if file_path_str not in self.detected_files:
+            logger.print_inotify(f"{file_path_str} creation/change detected in {self.sync_name}")
             self.status = "Work"
-            self.new_files.append(file_name)
-            self.new_files_file.write('\n'.join(self.new_files) + '\n')
+            with self.lock:
+                self.detected_files.append(file_path_str)
+            if file_name not in self.detected_files_history:
+                self.detected_files_history.append(file_name)
             Notification.get().update()
 
+    def get_next_files_to_sync(self):
+        with self.lock:
+            result = self.detected_files.copy()
+            self.detected_files.clear()
+        return result
+
+    def cancel_sync(self, detected_files):
+        with self.lock:
+            self.detected_files += detected_files
+
     def sync_success_and_no_waiting_sync(self):
-        self.status = "OK"
-        Notification.get().update()
+        if len(self.detected_files) == 0:
+            self.status = "OK"
+            Notification.get().update()
 
     def wait_connection(self):
         self.status = "Wait"

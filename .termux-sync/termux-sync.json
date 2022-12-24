@@ -1,7 +1,5 @@
 {
     "sync-delay-in-seconds": 60,
-    "start-time": "45 6 * * *",
-    "stop-time": "0 0 * * *",
     "test-url": "https://my.cloud",
     "debug": true,
     "sync-items": {
@@ -14,8 +12,9 @@
             ],
             "label": "🟢",
             "watch": true,
-            "max-depth": -1,
-            "watch-new_dir": true,
+            "watch-depth": -1,
+            "watch-sync-mode": "detected_files",
+            "watch-new-dir": true,
             "full-sync": true
         },
         "Signal": {
@@ -27,8 +26,9 @@
             ],
             "label": "🔵",
             "watch": true,
-            "max-depth": 0,
-            "watch-new_dir": false,
+            "watch-depth": 0,
+            "watch-sync-mode": "detected_files",
+            "watch-new-dir": false,
             "full-sync": true
         },
         "SMS": {
@@ -38,8 +38,9 @@
             "ignore-patterns": null,
             "label": "🟣",
             "watch": true,
-            "max-depth": 0,
-            "watch-new_dir": false,
+            "watch-depth": 0,
+            "watch-sync-mode": "detected_files",
+            "watch-new-dir": false,
             "full-sync": true
         },
         "Calls": {
@@ -49,8 +50,9 @@
             "ignore-patterns": null,
             "label": "☎️",
             "watch": true,
-            "max-depth": 0,
-            "watch-new_dir": false,
+            "watch-depth": 0,
+            "watch-sync-mode": "detected_files",
+            "watch-new-dir": false,
             "full-sync": true
         },
         "Camera": {
@@ -62,8 +64,9 @@
             ],
             "label": "🖼",
             "watch": true,
-            "max-depth": 0,
-            "watch-new_dir": false,
+            "watch-depth": 0,
+            "watch-sync-mode": "detected_files",
+            "watch-new-dir": false,
             "full-sync": true
         },
         "GX-80": {
@@ -73,8 +76,9 @@
             "ignore-patterns": null,
             "label": "📷",
             "watch": true,
-            "max-depth": 1,
-            "watch-new_dir": true,
+            "watch-depth": 1,
+            "watch-sync-mode": "detected_files",
+            "watch-new-dir": true,
             "full-sync": true
         },
         "Voicemail": {

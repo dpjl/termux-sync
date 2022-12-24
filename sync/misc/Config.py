@@ -22,7 +22,8 @@ class ConfSyncKey(str, Enum):
     remote_path = "remote-path"
     ignore_patterns = "ignore-patterns"
     label = "label"
-    max_depth = "max-depth"
+    watch_depth = "watch-depth"
+    watch_sync_mode = "watch-sync-mode"
     watch_new_dir = "watch-new-dir"
     root = "root"
     watch = "watch"
@@ -44,12 +45,13 @@ class SyncInfo:
         self.info_dict = info_dict
 
         self.type = self.get(ConfSyncKey.type, default="rsync")
-        self.local_path = self.get(ConfSyncKey.local_path)
+        self.local_path = Path(self.get(ConfSyncKey.local_path))
         self.remote_path = self.get(ConfSyncKey.remote_path)
         self.ignore_patterns = self.get(ConfSyncKey.ignore_patterns, default=[])
         self.label = self.get(ConfSyncKey.label, default="")
         self.watch = self.get(ConfSyncKey.watch, default=False)
-        self.max_depth = self.get(ConfSyncKey.max_depth, default=0)
+        self.watch_depth = self.get(ConfSyncKey.watch_depth, default=0)
+        self.watch_sync_mode = self.get(ConfSyncKey.watch_sync_mode, default="all")
         self.watch_new_dir = self.get(ConfSyncKey.watch_new_dir, default=False)
         self.full_sync = self.get(ConfSyncKey.full_sync, default=False)
         self.root = self.get(ConfSyncKey.root, default=False)

@@ -8,11 +8,11 @@ RSYNC_PATH = "/data/data/com.termux/files/usr/bin/rsync"
 class RSync:
 
     def __init__(self, local_path, remote_path):
-        self.local_path = local_path
+        self.local_path = str(local_path)
         self.remote_path = remote_path
         self.return_code = None
 
-    def get_command(self, duration=None, root=False):
+    def get_command(self, duration=None, files=None, root=False):
         command = []
         if root:
             command += ["sudo"]
@@ -21,11 +21,15 @@ class RSync:
             newermt_arg = f"-newermt '{duration} seconds ago'"
             duration_arg = f"--files-from=<(cd {self.local_path} && find . {newermt_arg} -type f)"
             command += [duration_arg]
+        elif files is not None:
+            files_list = "\n".join(files)
+            files_arg = f"--files-from=<(echo -e '{files_list}')"
+            command += [files_arg]
         command += [self.local_path, self.remote_path]
         return command
 
-    def run(self, duration=None, root=False):
-        command = self.get_command(duration, root)
+    def run(self, duration=None, files=None, root=False):
+        command = self.get_command(duration, files, root)
 
         logger.print_sync_tool(f"Call: {' '.join(command)}")
         process = subprocess.Popen(' '.join(command),
