@@ -96,17 +96,20 @@ class Main:
                 if sync_info.type == "rclone":
                     sync_tool = RClone(sync_info.local_path, sync_info.remote_path)
                 elif sync_info.type == "rsync":
-                    sync_tool = RSync(sync_info.local_path, sync_info.remote_path)
+                    sync_tool = RSync(sync_info.local_path, sync_info.remote_path, sync_info.ssh_port)
 
                 if sync_tool:
                     logger.print(f"Full sync of {sync_info.id}")
                     nb_files_sync = 0
-                    for file_path in sync_tool.run(root=sync_info.root):
+                    for file_path in sync_tool.run(root=sync_info.root, remote_root=sync_info.remote_root):
                         nb_files_sync += 1
                         if config.get(ConfKey.debug):
                             logger.print(f"Synchronized file: {file_path}")
                     logger.print(f"Full sync: {nb_files_sync} files synchronized")
-                    full_sync_status[sync_info.id] = nb_files_sync
+                    if sync_tool.return_code != 0:
+                        full_sync_status[sync_info.id] = "ERROR"
+                    else:
+                        full_sync_status[sync_info.id] = nb_files_sync
                     Notification.get().set_full_sync_status(full_sync_status)
         Notification.get().full_sync_done()
         logger.print("<<< Full sync end")

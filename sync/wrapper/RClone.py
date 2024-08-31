@@ -30,7 +30,7 @@ class RClone:
         command += [self.local_path, self.remote_path]
         return command
 
-    def run(self, duration=None, files=None, traverse=False, root=False):
+    def run(self, duration=None, files=None, traverse=False, root=False, remote_root=False):
         command = self.get_command(duration, files, traverse, root)
 
         logger.print_sync_tool(f"Call: {' '.join(command)}")

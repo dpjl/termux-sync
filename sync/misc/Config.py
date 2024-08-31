@@ -26,8 +26,10 @@ class ConfSyncKey(str, Enum):
     watch_sync_mode = "watch-sync-mode"
     watch_new_dir = "watch-new-dir"
     root = "root"
+    remote_root = "remote-root"
     watch = "watch"
     full_sync = "full-sync"
+    ssh_port = "ssh-port"
 
 
 STATUS_LABELS = {
@@ -55,6 +57,8 @@ class SyncInfo:
         self.watch_new_dir = self.get(ConfSyncKey.watch_new_dir, default=False)
         self.full_sync = self.get(ConfSyncKey.full_sync, default=False)
         self.root = self.get(ConfSyncKey.root, default=False)
+        self.remote_root = self.get(ConfSyncKey.remote_root, default=False)
+        self.ssh_port = self.get(ConfSyncKey.ssh_port, default=22)
 
         self.activated = True
         if not self.root and not os.path.exists(self.local_path):
