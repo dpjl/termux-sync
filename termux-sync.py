@@ -11,8 +11,6 @@ from sync.misc.Notification import Notification
 from sync.watch.CommandWatcher import CommandWatcher
 from sync.watch.DirectoryWatcherList import DirectoryWatcherList
 from sync.watch.INotifyThread import INotifyThread
-from sync.wrapper.RClone import RClone
-from sync.wrapper.RSync import RSync
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
@@ -92,16 +90,11 @@ class Main:
                 logger.print(f"Check if {sync_info.id} has to be synchronized")
 
             if sync_info.activated and sync_info.full_sync:
-                sync_tool = None
-                if sync_info.type == "rclone":
-                    sync_tool = RClone(sync_info.local_path, sync_info.remote_path)
-                elif sync_info.type == "rsync":
-                    sync_tool = RSync(sync_info.local_path, sync_info.remote_path, sync_info.ssh_port)
-
+                sync_tool = sync_info.generate_tool()
                 if sync_tool:
                     logger.print(f"Full sync of {sync_info.id}")
                     nb_files_sync = 0
-                    for file_path in sync_tool.run(root=sync_info.root, remote_root=sync_info.remote_root):
+                    for file_path in sync_tool.run():
                         nb_files_sync += 1
                         if config.get(ConfKey.debug):
                             logger.print(f"Synchronized file: {file_path}")

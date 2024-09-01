@@ -5,7 +5,8 @@ from pathlib import Path
 from typing import List
 
 from sync.misc.Logger import logger
-
+from sync.wrapper.RClone import RClone
+from sync.wrapper.RSync import RSync
 
 class ConfKey(str, Enum):
     sync_delay = "sync-delay-in-seconds"
@@ -30,6 +31,7 @@ class ConfSyncKey(str, Enum):
     watch = "watch"
     full_sync = "full-sync"
     ssh_port = "ssh-port"
+    extra_options = "extra-options"
 
 
 STATUS_LABELS = {
@@ -59,6 +61,7 @@ class SyncInfo:
         self.root = self.get(ConfSyncKey.root, default=False)
         self.remote_root = self.get(ConfSyncKey.remote_root, default=False)
         self.ssh_port = self.get(ConfSyncKey.ssh_port, default=22)
+        self.extra_options = self.get(ConfSyncKey.extra_options, default=[])
 
         self.activated = True
         if not self.root and not os.path.exists(self.local_path):
@@ -69,6 +72,12 @@ class SyncInfo:
         if key in self.info_dict:
             return self.info_dict[key]
         return default
+
+    def generate_tool(self):
+        if self.type == "rclone":
+            return RClone(self.local_path, self.remote_path, self.root, self.extra_options)
+        elif self.type == "rsync":
+            return RSync(self.local_path, self.remote_path, self.ssh_port, self.root, self.remote_root, self.extra_options)
 
 
 class Config:

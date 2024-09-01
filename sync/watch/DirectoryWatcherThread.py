@@ -10,8 +10,6 @@ from sync.misc.Config import ConfKey, config, SyncInfo
 from sync.misc.FilesInformation import FilesInformation
 from sync.misc.Logger import logger
 from sync.watch.INotifyThread import INotifyThread
-from sync.wrapper.RClone import RClone
-from sync.wrapper.RSync import RSync
 
 
 class DirectoryWatcherThread(Thread):
@@ -23,10 +21,7 @@ class DirectoryWatcherThread(Thread):
         self.sync_info = sync_info
 
         self.files_info = FilesInformation(self.sync_info.id)
-        if self.sync_info.type == "rclone":
-            self.sync_tool = RClone(self.sync_info.local_path, self.sync_info.remote_path)
-        elif self.sync_info.type == "rsync":
-            self.sync_tool = RSync(self.sync_info.local_path, self.sync_info.remote_path)
+        self.sync_tool = sync_info.generate_tool()
 
         self.connection_status = connection_status
         self.stop_required = False

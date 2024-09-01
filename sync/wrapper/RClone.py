@@ -8,14 +8,16 @@ RCLONE_PATH = "/data/data/com.termux/files/usr/bin/rclone"
 
 class RClone:
 
-    def __init__(self, local_path, remote_path):
+    def __init__(self, local_path, remote_path, root=False, extra_options=[]):
         self.local_path = str(local_path)
         self.remote_path = remote_path
         self.return_code = None
+        self.root = root
+        self.extra_options = extra_options
 
-    def get_command(self, duration=None, files=None, traverse=False, root=False):
+    def get_command(self, duration=None, files=None, traverse=False):
         command = []
-        if root:
+        if self.root:
             command += ["sudo"]
         command += [RCLONE_PATH, "copy", "-v"]
         if duration is not None:
@@ -26,12 +28,12 @@ class RClone:
             command += [files_arg]
         if not traverse:
             command += ["--no-traverse"]
-
+        command += self.extra_options
         command += [self.local_path, self.remote_path]
         return command
 
-    def run(self, duration=None, files=None, traverse=False, root=False, remote_root=False):
-        command = self.get_command(duration, files, traverse, root)
+    def run(self, duration=None, files=None, traverse=False):
+        command = self.get_command(duration, files, traverse)
 
         logger.print_sync_tool(f"Call: {' '.join(command)}")
         # process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
